@@ -9,7 +9,7 @@ pipeline {
     environment {
         APP_NAME = "jobportal"
         DEPLOY_DIR = "/home/ec2-user/jobportal"
-        SERVER_IP = "<SPRING_PUBLIC_IP>"
+        SERVER_IP = "13.204.155.5"
     }
 
     stages {
