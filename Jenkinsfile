@@ -10,6 +10,7 @@ pipeline {
         APP_NAME = "jobportal"
         DEPLOY_DIR = "/home/ec2-user/jobportal"
         SERVER_IP = "13.204.155.5"
+        JAR_NAME = "jobportal.jar"
     }
 
     stages {
@@ -27,10 +28,20 @@ pipeline {
             }
         }
 
+        stage('Prepare Server') {
+            steps {
+                sh """
+                ssh ec2-user@${SERVER_IP} '
+                mkdir -p ${DEPLOY_DIR}
+                '
+                """
+            }
+        }
+
         stage('Copy Jar to Server') {
             steps {
                 sh """
-                scp target/*.jar ec2-user@${SERVER_IP}:${DEPLOY_DIR}/app.jar
+                scp target/*SNAPSHOT.jar ec2-user@${SERVER_IP}:${DEPLOY_DIR}/${JAR_NAME}
                 """
             }
         }
@@ -39,7 +50,7 @@ pipeline {
             steps {
                 sh """
                 ssh ec2-user@${SERVER_IP} '
-                pkill -f app.jar || true
+                pkill -f ${JAR_NAME} || true
                 '
                 """
             }
@@ -49,7 +60,10 @@ pipeline {
             steps {
                 sh """
                 ssh ec2-user@${SERVER_IP} '
-                nohup java -jar ${DEPLOY_DIR}/app.jar > app.log 2>&1 &
+                nohup java -jar ${DEPLOY_DIR}/${JAR_NAME} \
+                > ${DEPLOY_DIR}/app.log 2>&1 &
+                sleep 5
+                ps -ef | grep ${JAR_NAME} | grep -v grep
                 '
                 """
             }
@@ -58,10 +72,7 @@ pipeline {
 
     post {
         success {
-            echo "JobPortal deployed successfully"
+            echo "✅ JobPortal deployed successfully"
         }
         failure {
-            echo "Deployment failed"
-        }
-    }
-}
+            echo "❌ Deployment
